@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Document</title>
+</head>
+<body>
+    <h1>Home.ejs</h1>
+    <h2>Bonjour à tous ! Vive Express</h2>
+    <% data.forEach((contact)=>{ %>
+        <a href="/contact/<%= contact._id %>">
+            <h2>
+                <%= contact.prenom %>
+            </h2>
+        </a>
+        <h2>
+            <%= contact.nom %>
+        </h2>
+        <p>
+            _id : <%= contact._id %>
+        </p>
+        <p>
+            <%= contact.email %>
+        </p>
+    <% }) %>
+</body>
+</html>
