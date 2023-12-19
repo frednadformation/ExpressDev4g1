@@ -16,6 +16,9 @@ mongoose.connect(url)
 
 app.set('view engine', 'ejs');
 
+const cors = require('cors');
+app.use(cors());
+
 //Method put et delete pour express
 const methodOverride = require('method-override');
 app.use(methodOverride('_method'));
@@ -37,7 +40,8 @@ app.get('/', function(req, res){
     Contact.find()
     .then((data)=>{
         console.log(data);
-        res.render('Home', {data: data});
+        // res.render('Home', {data: data});
+        res.json(data);
     })
     .catch(err => console.log(err));
 });
