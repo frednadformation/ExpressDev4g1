@@ -17,7 +17,9 @@ mongoose.connect(url)
 app.set('view engine', 'ejs');
 
 const cors = require('cors');
-app.use(cors());
+// app.use(cors());
+app.use(cors({credentials: true, origin: 'http://localhost:3000'}));
+
 
 //Method put et delete pour express
 const methodOverride = require('method-override');
@@ -27,6 +29,16 @@ app.use(methodOverride('_method'));
 
 const bcrypt = require('bcrypt');
 
+//Cookie parser
+const cookieParser = require('cookie-parser')
+app.use(cookieParser());
+
+//Import JWT
+const {createTokens, validateToken} = require('./JWT');
+
+//Import jwt decode
+const {jwtDecode} = require('jwt-decode');
+
 
 //Models :
 
@@ -35,7 +47,7 @@ var Contact = require('./models/Contact');
 
 
 //Contact
-app.get('/', function(req, res){
+app.get('/', validateToken, function(req, res){
     // res.sendFile(path.resolve('index.html'));
     Contact.find()
     .then((data)=>{
@@ -55,7 +67,8 @@ app.get('/contact/:id', function(req, res){
         _id : req.params.id
     })
     .then((data)=>{
-        res.render('Edit', {data: data});
+        // res.render('Edit', {data: data});
+        res.json(data);
     })
     .catch(err => console.log(err));
 });
@@ -128,7 +141,7 @@ app.post('/addblog', function(req, res){
     Data.save()
     .then(() =>{
         console.log("Blog saved");
-        res.redirect('/')
+        res.redirect('http://localhost:3000/allblogs/')
     })
     .catch(err =>console.error(err));
 });
@@ -137,7 +150,8 @@ app.post('/addblog', function(req, res){
 app.get('/allblogs', function(req, res){
     Blog.find()
     .then((data)=>{
-        res.render('AllBlogs',{data:data});
+        // res.render('AllBlogs',{data:data});
+        res.json(data);
     })
 });
 //page qui affiche le formulaire d'edition
@@ -146,7 +160,8 @@ app.get('/blog/:id', function(req, res){
         _id : req.params.id
     })
     .then((data)=>{
-        res.render('EditBlog',{data:data});
+        // res.render('EditBlog',{data:data});
+        res.json(data);
     })
 });
 
@@ -163,7 +178,7 @@ app.put('/editblog/:id', function(req, res){
         _id : req.params.id
     }, {$set:Data})
     .then(()=>{
-        res.redirect('/allblogs')
+        res.redirect('http://localhost:3000/allblogs')
     })
     .catch((err)=>{
         console.log(err);
@@ -174,7 +189,7 @@ app.delete('/deleteblog/:id', function(req, res) {
     Blog.findOneAndDelete({_id:req.params.id})
     .then(()=>{
         console.log("Blog deleted");
-        res.redirect('/allblogs');
+        res.redirect('http://localhost:3000/allblogs');
     })
     .catch((err)=>{console.log(err);})
 });
@@ -217,12 +232,30 @@ app.post('/api/connexion', function(req, res){
         if(!bcrypt.compareSync(req.body.password, user.password)){
             return res.status(404).send("Invalid password");
         }
-        res.render('UserPage', {data : user})
+        
+        const accessToken = createTokens(user)
+        res.cookie("access-token", accessToken, {
+            maxAge: 1000 * 60 * 60 * 24 * 30, //30 jours en ms
+            httpOnly: true
+        } )
+
+        res.redirect("http://localhost:3000/");
+        // res.json('LOGGED IN');
+
+        // res.render('UserPage', {data : user})
     })
     .catch(err =>{console.log(err);});
 
 });
 
+app.get('/logout', (req, res) =>{
+    res.clearCookie("access-token");
+    res.redirect('http://localhost:3000/');
+})
+
+app.get('/getJwt', validateToken, (req, res) =>{
+    res.json(jwtDecode(req.cookies["access-token"]))
+});
 
 var server = app.listen(5000, function() {
     console.log("Server listening on port 5000");
