@@ -1,8 +1,11 @@
 var express = require('express');
 var app = express();
+//Middleware pour recuperer la donnée
 var bodyParser = require('body-parser');
 
 app.use(bodyParser.urlencoded({extended: false}));
+
+//fichier de configarition
 require('dotenv').config();
 
 // var path = require('path');
@@ -14,10 +17,14 @@ mongoose.connect(url)
 .then(console.log("Mongodb connected"))
 .catch(err => console.log(err));
 
+//Systeme de vue EJS
 app.set('view engine', 'ejs');
 
+//Mettre a disposition les données et les rendres accessible pour le front
 const cors = require('cors');
+//De base
 // app.use(cors());
+//Transmettre TOUT type de données meme sensible (JWT)
 app.use(cors({credentials: true, origin: 'http://localhost:3000'}));
 
 
@@ -29,7 +36,7 @@ app.use(methodOverride('_method'));
 
 const bcrypt = require('bcrypt');
 
-//Cookie parser
+//Cookie parser : passage des données en cookie
 const cookieParser = require('cookie-parser')
 app.use(cookieParser());
 
@@ -39,12 +46,42 @@ const {createTokens, validateToken} = require('./JWT');
 //Import jwt decode
 const {jwtDecode} = require('jwt-decode');
 
+//Multer 
+const multer = require('multer')
+app.use(express.static('uploads'));
+
+const storage = multer.diskStorage({
+    destination : (req, file, cb) =>{
+        cb(null, 'uploads/')
+    },
+    filename : (req, file, cb) =>{
+        cb(null, file.originalname);
+    }
+})
+const upload = multer({storage})
+
 
 //Models :
 
 var Contact = require('./models/Contact');
 
+app.post('/uploadimage', upload.single('image'), function(req, res){
+    if(!req.file){
+        res.status(400).json("No file uploaded!");
+    }
+    else{
+        res.json("File uploaded!");
+    }
+})
 
+app.post('/uploadmultiple', upload.array('images', 5), function(req, res) {
+    if(!req.files || req.files.length === 0) {
+        res.status(400).json("No files uploaded!");
+    }
+    else {
+        res.json("File uploaded!");
+    }
+});
 
 //Contact
 app.get('/', validateToken, function(req, res){
@@ -130,20 +167,32 @@ app.get('/newblog', function(req, res){
 });
 
 //Ajout d'un blog
-app.post('/addblog', function(req, res){
+app.post('/addblog', upload.single('image') ,function(req, res){
     const Data = new Blog({
         titre : req.body.titre,
         sousTitre : req.body.sousTitre,
         auteur : req.body.auteur,
-        description : req.body.description
+        description : req.body.description,
+        imageName : req.file.filename,
+        datePublication : req.body.datePublication
     })
+    // console.log(req.file);
 
-    Data.save()
-    .then(() =>{
-        console.log("Blog saved");
-        res.redirect('http://localhost:3000/allblogs/')
-    })
-    .catch(err =>console.error(err));
+    //Image obligatoire pour l'enregistrement d'un blog
+    if(!req.file){
+        res.status(400).json("No File Uploaded")
+    }
+    else{
+
+        Data.save()
+        .then(() =>{
+            console.log("Blog saved");
+            res.json("Blog saved")
+            // res.redirect('http://localhost:3000/allblogs/')
+        })
+        .catch(err =>console.error(err));
+
+    }
 });
 
 //recuperation de les blogs
