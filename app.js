@@ -309,5 +309,3 @@ app.get('/getJwt', validateToken, (req, res) =>{
 var server = app.listen(5000, function() {
     console.log("Server listening on port 5000");
 });
-
-module.exports = app;
