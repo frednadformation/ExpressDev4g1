@@ -25,7 +25,7 @@ const cors = require('cors');
 //De base
 // app.use(cors());
 //Transmettre TOUT type de données meme sensible (JWT)
-app.use(cors({credentials: true, origin: 'http://localhost:3000'}));
+app.use(cors({credentials: true, origin: process.env.FRONTEND_URL}));
 
 
 //Method put et delete pour express
@@ -227,7 +227,7 @@ app.put('/editblog/:id', function(req, res){
         _id : req.params.id
     }, {$set:Data})
     .then(()=>{
-        res.redirect('http://localhost:3000/allblogs')
+        res.redirect(process.env.FRONTEND_URL + '/allblogs')
     })
     .catch((err)=>{
         console.log(err);
@@ -238,7 +238,7 @@ app.delete('/deleteblog/:id', function(req, res) {
     Blog.findOneAndDelete({_id:req.params.id})
     .then(()=>{
         console.log("Blog deleted");
-        res.redirect('http://localhost:3000/allblogs');
+        res.redirect(process.env.FRONTEND_URL + '/allblogs');
     })
     .catch((err)=>{console.log(err);})
 });
