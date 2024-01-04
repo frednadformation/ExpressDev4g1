@@ -1,0 +1,34 @@
+name: Node.js CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Deploy Express server to Cyclic.sh
+      run: |
+        npm install -g cyclic
+        cyclic deploy --name ExpressDev4g1 --port 5000 --script app.js
+
+    - name: Cleanup
+      run: cyclic destroy ExpressDev4g1
