@@ -27,6 +27,11 @@ const cors = require('cors');
 //Transmettre TOUT type de données meme sensible (JWT)
 app.use(cors({credentials: true, origin: process.env.FRONTEND_URL}));
 
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL); // update to match the domain you will make the request from
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+  });
 
 //Method put et delete pour express
 const methodOverride = require('method-override');
