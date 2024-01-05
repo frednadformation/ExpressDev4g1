@@ -24,11 +24,6 @@ jobs:
 
     - name: Install dependencies
       run: npm install
-
-    - name: Deploy Express server to Cyclic.sh
-      run: |
-        npm install -g cyclic
-        cyclic deploy --name ExpressDev4g1 --port 5000 --script app.js
-
-    - name: Cleanup
-      run: cyclic destroy ExpressDev4g1
+    
+    - name: Jest
+      run: npm run test
