@@ -24,6 +24,6 @@ jobs:
 
     - name: Install dependencies
       run: npm install
-    
+    #jest
     - name: Jest
       run: npm test
