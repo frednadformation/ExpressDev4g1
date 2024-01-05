@@ -52,4 +52,5 @@ describe('Express API', () => {
                 )
             })
     });
+    done();
 })
