@@ -26,4 +26,6 @@ jobs:
       run: npm install
     #jest
     - name: Jest
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
       run: npm test
