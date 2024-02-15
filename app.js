@@ -60,6 +60,107 @@ const storage = multer.diskStorage({
 })
 const upload = multer({storage})
 
+//Sécurité
+//toobusy
+const toobusy = require('toobusy-js');
+
+app.use(function(req, res, next) {
+    if(toobusy()){
+        res.status(503).send("Server too busy")
+    }
+    else{
+        next();
+    }
+})
+//Svg Captcha
+const session = require('express-session');
+const svgCaptcha = require('svg-captcha');
+app.use(
+    session({
+        secret: "Mysecretkey", //Identifie de façon unique la session
+        resave: false,
+        saveUninitialized: true
+    })
+)
+
+app.get('/captcha', (req, res) => {
+    const options = {
+        size: 4,
+        noise : 1,
+        color: true
+    }
+    const captcha = svgCaptcha.create(options); //genere l'image
+
+    req.session.captcha = captcha.text; //on stock le text obtenu dans la session
+    res.type('svg');
+    res.status(200).send(captcha.data);
+
+})
+
+app.get('/formCaptcha', (req, res) => {
+    res.render('Captcha');
+});
+
+app.post('/verify', (req, res)=>{
+    const {userInput} = req.body;
+    if(userInput === req.session.captcha){
+        res.status(200).send('Captcha is valid')
+    }
+    else{
+        res.status(400).send('Captcha is invalid !')
+    }
+})
+
+// hpp - polution des parametres http
+
+const hpp = require('hpp');
+
+app.use(hpp());
+
+// Helmet - modification des entete http
+
+const helmet = require('helmet');
+
+app.use(helmet());
+
+
+//No cache - cache control : éviter que les données soit stockées en cache
+const nocache = require('nocache');
+app.use(nocache());
+
+
+
+
+
+
+//Documentation Swagger
+
+// const swaggerJsDoc = require('swagger-jsdoc')
+// const swaggerUI = require('swagger-ui-express')
+
+// const swaggerOptions = {
+//     swaggerDefinition : {
+//         info : {
+//             title : 'backend API Documentation',
+//             version : '1.0',
+//         }
+//     },
+//     apis : ['app.js']
+// }
+
+// const swaggerDocs = swaggerJsDoc(swaggerOptions);
+// console.log(swaggerDocs);
+
+// app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
+
+const swaggerUI = require('swagger-ui-express');
+
+const swaggerDocs = require("./swagger-output.json");
+
+console.log(swaggerDocs);
+
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
+
 
 //Models :
 
@@ -167,6 +268,27 @@ app.get('/newblog', function(req, res){
 });
 
 //Ajout d'un blog
+
+/**
+ * @swagger
+ * /addblog:
+ *          post:
+ *              description: add a new blog
+ *              parameters:
+ *              - titre: title
+ *                description: title of the new blog
+ *                in: formData
+ *                required: false
+ *                type: String
+ *              - sousTitre: subtitle
+ *                description: subtitle of the new blog
+ *                in: formData
+ *                required: false
+ *                type: String
+ *              responses:
+ *                  201:
+ *                     description: Created
+ */
 app.post('/addblog',function(req, res){
     const Data = new Blog({
         titre : req.body.titre,
@@ -196,6 +318,16 @@ app.post('/addblog',function(req, res){
 });
 
 //recuperation de les blogs
+
+/**
+ * @swagger
+ * /allblogs:
+ *          get:
+ *              description: get all blogs
+ *              responses:
+ *                  200:
+ *                     description: Success
+ */
 app.get('/allblogs', function(req, res){
     Blog.find()
     .then((data)=>{
@@ -286,10 +418,12 @@ app.post('/api/connexion', function(req, res){
         }
         
         const accessToken = createTokens(user)
+        
         res.cookie("access-token", accessToken, {
             maxAge: 1000 * 60 * 60 * 24 * 30, //30 jours en ms
             httpOnly: true
         } )
+
 
         res.redirect(process.env.FRONTEND_URL);
         // res.json('LOGGED IN');
